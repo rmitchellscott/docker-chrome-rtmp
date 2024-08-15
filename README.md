@@ -1,4 +1,4 @@
-# PageCaster
+# Pagecaster
 Pagecaster streams a web browser to an RTMP server, with audio! It does this by creating a virtual display, opening chrome in kiosk mode on that display, and then streaming the framebuffer via ffmpeg to an RTMP server. A 480p stream on my system consumes about 1.2 cores of CPU and 350MB of RAM. I haven't tried to do anything with Intel QuickSync, maybe someday!
 
 # Examples
