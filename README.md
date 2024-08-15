@@ -14,7 +14,7 @@ docker run -d \
 ghcr.io/rmitchellscott/pagecaster
 ```
 
-## Docker Compse
+## Docker Compose
 
 ```yaml
 version: '3.8'
