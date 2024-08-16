@@ -1,5 +1,5 @@
 # Pagecaster
-Pagecaster streams a web browser to an RTMP server, with audio! It does this by creating a virtual display, opening chrome in kiosk mode on that display, and then streaming the framebuffer via ffmpeg to an RTMP server. A 480p stream on my system consumes about 1.2 cores of CPU and 350MB of RAM. I haven't tried to do anything with Intel QuickSync, maybe someday!
+Pagecaster streams a web browser to an RTMP server an injects an Icecast audio stream! It does this by creating a virtual display, opening chrome in kiosk mode on that display, and then streaming the framebuffer via ffmpeg to an RTMP server. A 480p stream on my system consumes about half a CPU core and 300MB of RAM. I haven't tried to do anything with Intel QuickSync, maybe someday!
 
 # Examples
 The following examples are provided as a way to get started. Some adjustments may be required before production use, particularly regarding secret management.
@@ -8,6 +8,7 @@ The following examples are provided as a way to get started. Some adjustments ma
 docker run -d \
 --shm-size=256m \
 -e WEB_URL="https://weatherstar.netbymatt.com/" \
+-e ICE_URL="https://radio.supercool.stream" \
 -e RTMP_URL="rtmp://supercool.stream:1935/live" \
 -e SCREEN_HEIGHT=480 \
 -e SCREEN_WIDTH=854 \
@@ -28,11 +29,11 @@ services:
           shm_size: 256m
     environment:
       - WEB_URL=https://weatherstar.netbymatt.com/
+      - ICE_URL=https://radio.supercool.stream
       - RTMP_URL=rtmp://supercool.stream:1935/live
       - SCREEN_HEIGHT=480
       - SCREEN_WIDTH=854
     restart: always
-
 ```
 
 ## Kubernetes statefulset
@@ -66,6 +67,8 @@ spec:
           value: "854"
         - name: WEB_URL
           value: https://weatherstar.netbymatt.com/
+       - name: ICE_URL
+          value: https://radio.supercool.stream
         image: ghcr.io/rmitchellscott/pagecaster
         imagePullPolicy: IfNotPresent
         name: pagecaster
@@ -109,6 +112,7 @@ spec:
               pullPolicy: IfNotPresent
             env:
               WEB_URL: "https://weatherstar.netbymatt.com/"
+              ICE_URL: "https://radio.supercool.stream"
               RTMP_URL: rtmp://supercool.stream:1935/live
               SCREEN_WIDTH: 854
               SCREEN_HEIGHT: 480
@@ -128,6 +132,7 @@ spec:
 | Variable                 | Required? | Details | Example |
 |--------------------------|-----------|---------|---------|
 | WEB_URL               | yes       | URL to stream | https://weatherstar.netbymatt.com/   |
+| ICE_URL               | yes       | Icecast URL   | https://radio.supercool.stream
 | RTMP_URL               | yes       | RMTP URL to stream to | rtmp://supercool.stream:1935/live |
 | SCREEN_HEIGHT           | yes       | Height of browser window | 480 |
 | SCREEN_WIDTH                  | yes       | Width of browser window | 854
