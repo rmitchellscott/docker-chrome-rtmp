@@ -1,5 +1,15 @@
-FROM debian:latest
-RUN apt-get update && apt-get install -y vim chromium xvfb ffmpeg
+FROM alpine:latest
+
+RUN apk update && \
+    apk add --no-cache \
+    vim \
+    chromium \
+    xvfb \
+    ffmpeg \
+    bash
+
 WORKDIR /app
+
 COPY entrypoint.sh .
+
 CMD ["bash", "entrypoint.sh"]
