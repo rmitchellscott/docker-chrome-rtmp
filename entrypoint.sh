@@ -13,7 +13,7 @@ Xvfb :99 -screen 0 "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}"x24 &
 export DISPLAY=:99
 
 # Browser time
-chromium --kiosk --no-sandbox --window-size="${SCREEN_WIDTH}","${SCREEN_HEIGHT}" --window-position=0,0 --enable-features=OverlayScrollbar --autoplay-policy=no-user-gesture-required "$WEB_URL" &
+chromium --no-first-run --kiosk --no-sandbox --window-size="${SCREEN_WIDTH}","${SCREEN_HEIGHT}" --window-position=0,0 --enable-features=OverlayScrollbar --autoplay-policy=no-user-gesture-required "$WEB_URL" &
 
 
 # Use ffmpeg to capture the display and stream it to an RTMP server
