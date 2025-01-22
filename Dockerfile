@@ -1,30 +1,31 @@
-FROM debian:bullseye-slim
+FROM alpine:3.21
 
 # Install required packages
-RUN apt-get update && apt-get install -y \
-    firefox-esr \
+RUN apk add --no-cache \
+    firefox \
     xvfb \
     ffmpeg \
     dbus \
     fontconfig \
     xauth \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    x11-xserver-utils \
+    libx11 \
+    libxcb \
+    libxcomposite \
+    libxcursor \
+    libxdamage \
+    libxfixes \
+    libxi \
+    libxrandr \
+    libxrender \
+    libxext \
+    libxtst \
+    xrandr \
+    xset \
     bash \
-    && rm -rf /var/lib/apt/lists/*
+    mesa-dri-gallium
 
 # Create a non-root user
-RUN useradd -m -d /home/firefox firefox
+RUN adduser -D -h /home/firefox firefox
 
 # Set up the script
 COPY stream.sh /stream.sh
