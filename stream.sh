@@ -91,24 +91,64 @@ echo "Firefox started (PID: $FIREFOX_PID)"
 echo "Waiting for Firefox to load..."
 sleep 3
 
-echo "Starting FFmpeg capture with QuickSync..."
-# Use ffmpeg to capture the display and stream it with QuickSync
-if [ -z "$ICE_URL" ]; then
-    # ICE_URL is not set, use video with silence
-    ffmpeg -hide_banner -loglevel error \
-        -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
-        -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
-        -c:v h264_qsv -preset "${FFMPEG_PRESET:-veryfast}" -global_quality 23 -maxrate 3000k -bufsize 6000k -async_depth 4 \
-        -c:a aac -b:a 128k -ac 2 \
-        -f flv "$RTMP_URL" 2>/dev/null &
+# Check GPU status before starting FFmpeg
+echo "Checking Intel GPU status..."
+if [ -e "/dev/dri" ]; then
+    echo "DRI devices found:"
+    ls -l /dev/dri/
+    echo "Testing GPU drivers..."
+    
+    # Try iHD driver first
+    echo "Testing iHD driver:"
+    export LIBVA_DRIVER_NAME=iHD
+    vainfo
+    
+    if [ $? -ne 0 ]; then
+        echo "iHD driver failed, trying i965 driver:"
+        export LIBVA_DRIVER_NAME=i965
+        vainfo
+    fi
 else
-    # ICE_URL is set, use both video and audio
-    ffmpeg -hide_banner -loglevel error \
+    echo "Warning: No /dev/dri directory found!"
+fi
+
+# Set up audio input based on ICE_URL
+if [ -z "$ICE_URL" ]; then
+    AUDIO_INPUT="-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100"
+else
+    AUDIO_INPUT="-i $ICE_URL"
+fi
+
+echo "Starting FFmpeg capture..."
+# Try QSV first, then try VAAPI with different drivers
+if ! LIBVA_DRIVER_NAME=iHD ffmpeg -init_hw_device qsv=hw -v error 2>&1 | grep -q "Error"; then
+    echo "Using QSV with iHD driver..."
+    export LIBVA_DRIVER_NAME=iHD
+    ffmpeg -v debug -stats \
         -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
-        -i "$ICE_URL" \
+        ${AUDIO_INPUT} \
         -c:v h264_qsv -preset "${FFMPEG_PRESET:-veryfast}" -global_quality 23 -maxrate 3000k -bufsize 6000k -async_depth 4 \
         -c:a aac -b:a 128k -ac 2 \
-        -f flv "$RTMP_URL" 2>/dev/null &
+        -f flv "$RTMP_URL" 2>&1 &
+elif ! LIBVA_DRIVER_NAME=i965 ffmpeg -init_hw_device qsv=hw -v error 2>&1 | grep -q "Error"; then
+    echo "Using QSV with i965 driver..."
+    export LIBVA_DRIVER_NAME=i965
+    ffmpeg -v debug -stats \
+        -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
+        ${AUDIO_INPUT} \
+        -c:v h264_qsv -preset "${FFMPEG_PRESET:-veryfast}" -global_quality 23 -maxrate 3000k -bufsize 6000k -async_depth 4 \
+        -c:a aac -b:a 128k -ac 2 \
+        -f flv "$RTMP_URL" 2>&1 &
+else
+    echo "QSV failed, falling back to VAAPI..."
+    ffmpeg -v debug -stats \
+        -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
+        ${AUDIO_INPUT} \
+        -vaapi_device /dev/dri/renderD128 \
+        -vf 'format=nv12,hwupload' \
+        -c:v h264_vaapi -qp 23 -maxrate 3000k -bufsize 6000k \
+        -c:a aac -b:a 128k -ac 2 \
+        -f flv "$RTMP_URL" 2>&1 &
 fi
 FFMPEG_PID=$!
 

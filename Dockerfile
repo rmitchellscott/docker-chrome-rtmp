@@ -1,6 +1,6 @@
 FROM alpine:3.21
 
-# Install required packages including QuickSync dependencies
+# Install required packages including QuickSync dependencies and diagnostic tools
 RUN apk add --no-cache \
     firefox \
     xvfb \
@@ -29,6 +29,7 @@ RUN apk add --no-cache \
     libva \
     libva-intel-driver \
     mesa-va-gallium \
+    libva-utils \
     && \
     # Install Microsoft fonts
     update-ms-fonts && \
@@ -61,7 +62,13 @@ ENV SCREEN_WIDTH=1920 \
     DBUS_SESSION_BUS_ADDRESS=/dev/null \
     MOZ_LOG="" \
     MOZ_LOG_FILE=/dev/null \
-    LIBVA_DRIVER_NAME=iHD
+    LIBVA_DRIVER_NAME=iHD \
+    XDG_RUNTIME_DIR=/run/user/1000
+
+# Create runtime directory for the firefox user
+RUN mkdir -p /run/user/1000 && \
+    chown firefox:firefox /run/user/1000 && \
+    chmod 700 /run/user/1000
 
 # Switch to non-root user
 USER firefox
