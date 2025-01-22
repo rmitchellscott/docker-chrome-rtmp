@@ -91,14 +91,14 @@ echo "Firefox started (PID: $FIREFOX_PID)"
 echo "Waiting for Firefox to load..."
 sleep 3
 
-echo "Starting FFmpeg capture..."
-# Use ffmpeg to capture the display and stream it
+echo "Starting FFmpeg capture with QuickSync..."
+# Use ffmpeg to capture the display and stream it with QuickSync
 if [ -z "$ICE_URL" ]; then
     # ICE_URL is not set, use video with silence
     ffmpeg -hide_banner -loglevel error \
         -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
         -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
-        -c:v libx264 -preset "${FFMPEG_PRESET:-veryfast}" -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p \
+        -c:v h264_qsv -preset "${FFMPEG_PRESET:-veryfast}" -global_quality 23 -maxrate 3000k -bufsize 6000k -async_depth 4 \
         -c:a aac -b:a 128k -ac 2 \
         -f flv "$RTMP_URL" 2>/dev/null &
 else
@@ -106,7 +106,7 @@ else
     ffmpeg -hide_banner -loglevel error \
         -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
         -i "$ICE_URL" \
-        -c:v libx264 -preset "${FFMPEG_PRESET:-veryfast}" -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p \
+        -c:v h264_qsv -preset "${FFMPEG_PRESET:-veryfast}" -global_quality 23 -maxrate 3000k -bufsize 6000k -async_depth 4 \
         -c:a aac -b:a 128k -ac 2 \
         -f flv "$RTMP_URL" 2>/dev/null &
 fi

@@ -1,6 +1,6 @@
 FROM alpine:3.21
 
-# Install required packages
+# Install required packages including QuickSync dependencies
 RUN apk add --no-cache \
     firefox \
     xvfb \
@@ -25,6 +25,10 @@ RUN apk add --no-cache \
     bash \
     mesa-dri-gallium \
     msttcorefonts-installer \
+    intel-media-driver \
+    libva \
+    libva-intel-driver \
+    mesa-va-gallium \
     && \
     # Install Microsoft fonts
     update-ms-fonts && \
@@ -39,7 +43,9 @@ RUN apk add --no-cache \
 
 # Create a non-root user and add to video group for better graphics support
 RUN adduser -D -h /home/firefox firefox && \
-    addgroup firefox video
+    addgroup firefox video && \
+    addgroup render && \
+    addgroup firefox render
 
 # Set up the script
 COPY stream.sh /stream.sh
@@ -54,7 +60,8 @@ ENV SCREEN_WIDTH=1920 \
     DISPLAY=:99 \
     DBUS_SESSION_BUS_ADDRESS=/dev/null \
     MOZ_LOG="" \
-    MOZ_LOG_FILE=/dev/null
+    MOZ_LOG_FILE=/dev/null \
+    LIBVA_DRIVER_NAME=iHD
 
 # Switch to non-root user
 USER firefox
