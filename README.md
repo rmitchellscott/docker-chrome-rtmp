@@ -1,5 +1,5 @@
 # Pagecaster
-Pagecaster streams a web browser to an RTMP server and optionally injects an Icecast audio stream! It does this by creating a virtual display, opening chrome in kiosk mode on that display, and then streaming the framebuffer via ffmpeg to an RTMP server. A 480p stream on my system consumes about half a CPU core and 300MB of RAM. I haven't tried to do anything with Intel QuickSync, maybe someday!
+Pagecaster streams a web browser to an RTMP server and optionally injects an Icecast audio stream! It does this by creating a virtual display, opening Firefox in kiosk mode on that display, and then streaming the framebuffer via ffmpeg to an RTMP server. A 480p stream on my system consumes about half a CPU core and 300MB of RAM. I haven't tried to do anything with Intel QuickSync, maybe someday!
 
 # Examples
 The following examples are provided as a way to get started. Some adjustments may be required before production use, particularly regarding secret management.
@@ -136,3 +136,4 @@ spec:
 | RTMP_URL               | yes       | RMTP URL to stream to | rtmp://supercool.stream:1935/live |
 | SCREEN_HEIGHT           | yes       | Height of browser window | 480 |
 | SCREEN_WIDTH                  | yes       | Width of browser window | 854
+|FFMPEG_PRESET          | no | ffmpeg preset to use | veryfast

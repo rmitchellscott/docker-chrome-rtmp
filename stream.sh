@@ -44,7 +44,7 @@ if [ -z "$WEB_URL" ] || [ -z "$RTMP_URL" ]; then
 fi
 
 # Configure display system
-Xvfb :99 -screen 0 "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}"x24 &
+Xvfb :99 -screen 0 "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}"x24 >/dev/null 2>&1 &
 XVFB_PID=$!
 export DISPLAY=:99
 
@@ -61,6 +61,12 @@ user_pref("browser.sessionstore.resume_from_crash", false);
 user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.tabs.warnOnClose", false);
 user_pref("browser.fullscreen.autohide", false);
+user_pref("browser.tabs.firefox-view", false);
+user_pref("browser.startup.homepage_override.mstone", "ignore");
+user_pref("browser.rights.3.shown", true);
+user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);
+user_pref("toolkit.telemetry.enabled", false);
+user_pref("browser.discovery.enabled", false);
 EOF
 
 # Create CSS for fullscreen
@@ -78,31 +84,31 @@ firefox --profile "$PROFILE_DIR" \
     --height "${SCREEN_HEIGHT}" \
     --no-remote \
     --private-window "${WEB_URL}" \
-    --kiosk &
+    --kiosk >/dev/null 2>&1 &
 FIREFOX_PID=$!
 
 echo "Firefox started (PID: $FIREFOX_PID)"
 echo "Waiting for Firefox to load..."
-sleep 10
+sleep 3
 
 echo "Starting FFmpeg capture..."
 # Use ffmpeg to capture the display and stream it
 if [ -z "$ICE_URL" ]; then
     # ICE_URL is not set, use video with silence
-    ffmpeg -hide_banner -loglevel info \
+    ffmpeg -hide_banner -loglevel error \
         -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
         -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
         -c:v libx264 -preset "${FFMPEG_PRESET:-veryfast}" -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p \
         -c:a aac -b:a 128k -ac 2 \
-        -f flv "$RTMP_URL" &
+        -f flv "$RTMP_URL" 2>/dev/null &
 else
     # ICE_URL is set, use both video and audio
-    ffmpeg -hide_banner -loglevel info \
+    ffmpeg -hide_banner -loglevel error \
         -f x11grab -framerate 30 -s "${SCREEN_WIDTH}"x"${SCREEN_HEIGHT}" -draw_mouse 0 -i :99.0 \
         -i "$ICE_URL" \
         -c:v libx264 -preset "${FFMPEG_PRESET:-veryfast}" -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p \
         -c:a aac -b:a 128k -ac 2 \
-        -f flv "$RTMP_URL" &
+        -f flv "$RTMP_URL" 2>/dev/null &
 fi
 FFMPEG_PID=$!
 
